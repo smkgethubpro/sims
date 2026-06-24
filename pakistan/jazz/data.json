@@ -1,0 +1,19 @@
+{
+  "category": "data",
+  "packages": [
+    {
+      "name": "Monthly Supreme",
+      "price": "1738",
+      "code": "*117*30#",
+      "data": "25GB",
+      "validity": "30 Days"
+    },
+    {
+      "name": "Weekly Mega",
+      "price": "350",
+      "code": "*117*14#",
+      "data": "8GB",
+      "validity": "7 Days"
+    }
+  ]
+}

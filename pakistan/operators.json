@@ -4,6 +4,36 @@
       "id": "jazz",
       "name": "Jazz",
       "folder": "jazz"
+    },
+    {
+      "id": "zong",
+      "name": "Zong",
+      "folder": "zong"
+    },
+    {
+      "id": "ufone",
+      "name": "Ufone",
+      "folder": "ufone"
+    },
+    {
+      "id": "telenor",
+      "name": "Telenor",
+      "folder": "telenor"
+    },
+    {
+      "id": "scom",
+      "name": "SCOM",
+      "folder": "scom"
+    },
+    {
+      "id": "rox",
+      "name": "ROX",
+      "folder": "rox"
+    },
+    {
+      "id": "onic",
+      "name": "ONIC",
+      "folder": "onic"
     }
   ]
 }

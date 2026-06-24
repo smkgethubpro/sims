@@ -1,0 +1,12 @@
+{
+  "operator": "Jazz",
+  "packages": [
+    {
+      "name": "Monthly Supreme",
+      "price": "1738",
+      "code": "*117*30#",
+      "data": "25GB",
+      "validity": "30 Days"
+    }
+  ]
+}

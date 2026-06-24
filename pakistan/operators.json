@@ -3,7 +3,7 @@
     {
       "id": "jazz",
       "name": "Jazz",
-      "file": "jazz.json"
+      "folder": "jazz"
     }
   ]
 }

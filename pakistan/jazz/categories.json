@@ -1,0 +1,14 @@
+{
+  "categories": [
+    {
+      "id": "data",
+      "name": "Data Packages",
+      "file": "data.json"
+    },
+    {
+      "id": "social",
+      "name": "Social Packages",
+      "file": "social.json"
+    }
+  ]
+}

@@ -1,19 +1,113 @@
 {
   "category": "data",
+  "type": "internet_packages",
+  "meta": {
+    "source": "test_api",
+    "version": 2,
+    "currency": "PKR"
+  },
   "packages": [
     {
       "name": "Monthly Supreme",
       "price": "1738",
+      "cost": 1738,
       "code": "*117*30#",
+      "ussd": "*117*30#",
       "data": "25GB",
-      "validity": "30 Days"
+      "data_amount": 25,
+      "unit": "GB",
+      "validity": "30 Days",
+      "duration_days": 30,
+      "network": "Jazz",
+      "active": true
     },
     {
-      "name": "Weekly Mega",
+      "title": "Weekly Mega",
       "price": "350",
-      "code": "*117*14#",
+      "amount": 350,
+      "dial_code": "*117*14#",
       "data": "8GB",
-      "validity": "7 Days"
+      "validity_days": 7,
+      "network": "Jazz"
+    },
+    {
+      "package_name": "Jazz Weekly Freedom",
+      "price": "652",
+      "code": "*711#",
+      "internet": "50GB",
+      "validity": "7 Days",
+      "category_tag": "weekly"
+    },
+    {
+      "name": "Jazz Weekly X",
+      "price": "608",
+      "code": "*852#",
+      "data": "100GB",
+      "validity": "7 Days",
+      "extra_bonus": "YouTube Unlimited"
+    },
+    {
+      "name": "Jazz Weekly Super Max",
+      "price": "608",
+      "code": "*506#",
+      "data": "30GB",
+      "validity": "7 Days",
+      "is_featured": true
+    },
+    {
+      "name": "Jazz Monthly Mega",
+      "price": "300",
+      "code": "*117*31#",
+      "data": "4.2GB",
+      "validity": "30 Days",
+      "speed_limit": "4G"
+    },
+    {
+      "name": "Jazz Monthly Browser",
+      "price": "175",
+      "code": "*117*77#",
+      "data": "2.5GB",
+      "validity": "30 Days",
+      "only_apps": ["Facebook", "WhatsApp", "YouTube"]
+    },
+
+    // EXTRA TEST PACKAGES
+    {
+      "name": "Daily Light Pack",
+      "price": "50",
+      "code": "*111*1#",
+      "data": "500MB",
+      "validity": "1 Day",
+      "type": "daily"
+    },
+    {
+      "name": "Social Bundle",
+      "price": "99",
+      "code": "*123*5#",
+      "data": "1GB",
+      "validity": "3 Days",
+      "apps_only": true,
+      "apps": {
+        "whatsapp": "unlimited",
+        "facebook": "1GB",
+        "instagram": "500MB"
+      }
+    },
+    {
+      "name": "Night Offer",
+      "price": "25",
+      "code": "*222#",
+      "data": "3GB",
+      "validity": "Night 12AM-6AM",
+      "time_based": true
+    },
+    {
+      "name": "Unlimited Social Pack",
+      "price": "499",
+      "code": "*999#",
+      "data": "Unlimited",
+      "validity": "30 Days",
+      "fair_usage_policy": "2GB/day"
     }
   ]
 }

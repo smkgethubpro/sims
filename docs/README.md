@@ -1,168 +1,199 @@
-# SIM Packages Manager Dashboard
+# SIM Packages — Admin Dashboard
 
-A web-based interface for managing and browsing mobile operator SIM packages across 197 countries.
+A lightweight, **static** admin dashboard for managing SIM package data stored
+as JSON in this repository. It runs entirely in the browser and is served from
+**GitHub Pages** at https://smkgethubpro.github.io/sims/ — no backend required.
 
-## Features
+The dashboard is optimized for **editing and adding operators and packages**
+efficiently, not for marketing. It reads the repository's JSON over the GitHub
+raw CDN and, because Pages is static (no write token), produces ready‑to‑commit
+JSON + exact repo paths for every change.
 
-✨ **Browse Packages** - Navigate through countries, operators, and categories to find specific packages
+---
 
-➕ **Add Packages** - Easy form to add new packages to the database
+## Information architecture
 
-📊 **Statistics** - View repository statistics and metadata
+A modern **three‑panel** layout replaces the old 4‑tab UI:
 
-📖 **Documentation** - Complete guide on repository structure and conventions
+```
+┌──────────── Top bar: brand · global search · repo status · refresh · repo link ┐
+├──────────── Stat strip: real Countries / Operators / Packages counts ──────────┤
+│ Left sidebar      │ Middle panel              │ Right panel                     │
+│ Countries + search│ Operators (w/ counts)     │ Package table + editor          │
+│                   │ Category chips per operator│ edit · duplicate · delete · view│
+└───────────────────┴───────────────────────────┴─────────────────────────────────┘
+```
 
-🌍 **197 Countries** - Comprehensive coverage across all regions
+- **Left** — country list + live filter (and a global search in the top bar).
+- **Middle** — operators for the selected country, each with a real package
+  count badge; category chips per operator; **+ Add operator** / **+ Category**.
+- **Right** — package table with **Edit / Duplicate / Delete / Preview**, plus
+  **+ Add package** with a clean form and **live JSON preview**.
 
-📱 **Responsive Design** - Works on desktop, tablet, and mobile
+---
 
-## Live Access
-
-The dashboard is available at: https://smkgethubpro.github.io/sims/
-
-## Repository Structure
+## Project structure
 
 ```
 sims/
-├── countries.json          # Main index
-├── [country]/
-│   ├── operators.json      # Operators in country
-│   └── [operator]/
-│       ├── categories.json  # Category definitions
-│       ├── data.json       # Data packages
-│       ├── social.json     # Social packages
-│       └── ...
-└── docs/                   # GitHub Pages files
-    ├── index.html          # Main dashboard
-    ├── styles.css          # Styling
-    └── script.js           # Functionality
+├── countries.json              # Master index: { id, name, file }
+├── <country-folder>/           # NOTE: folder name comes from `file`, not `id`
+│   ├── operators.json          # { operators: [{ id, name, folder }] }
+│   └── <operator-folder>/
+│       ├── categories.json     # { categories: [{ id, name, file }] }
+│       └── <category>.json     # { category, meta?, packages: [...] }
+└── docs/                       # GitHub Pages site
+    ├── index.html
+    └── assets/
+        ├── css/styles.css      # Design system
+        └── js/
+            ├── app.js          # Orchestrator: state + panels + events
+            ├── api.js          # All data loading (raw CDN + contents API)
+            ├── schema.js       # Canonical shape + legacy-key mapper
+            ├── validation.js   # Field/structure validation + slug helpers
+            ├── editor.js       # Package form + live JSON preview
+            ├── workflows.js    # Add operator / category + commit instructions
+            └── ui.js           # DOM helpers, states, modal, toast
 ```
 
-## How to Use
+The code is split so **data loading, rendering, validation and editing are
+separate** modules with single responsibilities.
 
-### Browse Packages
+---
 
-1. Click the **"Browse"** tab
-2. Select a country from the dropdown
-3. Choose an operator
-4. Pick a category (Data, Social, etc.)
-5. View all available packages
+## Canonical package schema
 
-### Add a New Package
-
-1. Click the **"Add Package"** tab
-2. Fill in the package details:
-   - Country
-   - Operator
-   - Category
-   - Package name, price, data, validity, USSD code
-3. Click "Add Package"
-4. The generated JSON will be displayed
-5. Manually add it to the repository or create a PR
-
-### View Statistics
-
-Click the **"Statistics"** tab to see:
-- Total countries covered
-- Number of operators
-- Package categories
-- Recent updates
-
-## Package JSON Format
+Every package is normalized into **one** canonical structure for display and
+editing:
 
 ```json
 {
-  "name": "Monthly Supreme",
-  "price": "1738",
-  "cost": 1738,
-  "code": "*117*30#",
-  "ussd": "*117*30#",
-  "data": "25GB",
-  "data_amount": 25,
-  "unit": "GB",
-  "validity": "30 Days",
-  "duration_days": 30,
-  "network": "Jazz",
+  "name": "",
+  "price": "",
+  "code": "",
+  "data": "",
+  "validity": "",
+  "network": "",
   "active": true
 }
 ```
 
-## Supported Categories
+### Schema normalization strategy (`schema.js`)
 
-- **data** - Internet/Data packages
-- **social** - Social media focused packages
-- **voice** - Call minutes packages
-- **roaming** - International roaming packages
-- **combo** - Mixed services packages
+Source files use many inconsistent keys. The mapper resolves them by trying a
+prioritized list of aliases per canonical field (first present wins):
 
-## Adding a New Country
+| Canonical  | Accepted source keys                                            |
+|------------|-----------------------------------------------------------------|
+| `name`     | `name`, `title`, `package_name`, `pkg_name`, `label`            |
+| `price`    | `price`, `cost`, `amount`, `rate`, `mrp`                        |
+| `code`     | `code`, `ussd`, `dial_code`, `ussd_code`, `short_code`         |
+| `data`     | `data`, `internet`, `data_amount` (+`unit`), `volume`, `quota` |
+| `validity` | `validity`, `validity_days`, `duration_days`, `duration`, `days`|
+| `network`  | `network`, `operator`, `carrier`                               |
+| `active`   | `active`, `is_active`, `enabled` (defaults to `true`)          |
 
-1. Add entry to `countries.json`:
-   ```json
-   { "id": "xx", "name": "Country Name", "file": "xx/operators.json" }
-   ```
+- Numeric `validity_days`/`duration_days` are humanized (`7` → `"7 Days"`).
+- `data_amount` + `unit` are composed (`25` + `GB` → `"25GB"`).
+- **Unknown keys are preserved** under a non‑enumerable `_extra` so editing a
+  package never destroys extra metadata; on save they are re‑attached after the
+  canonical fields, keeping a consistent key order.
 
-2. Create directory: `xx/`
+Validation (`validation.js`) enforces required fields
+(`name, price, code, data, validity`) and emits non‑blocking warnings (e.g.
+non‑numeric price, suspicious USSD code, empty network).
 
-3. Add `operators.json` with operators:
-   ```json
-   {
-     "operators": [
-       { "id": "op1", "name": "Operator 1", "folder": "operator1" }
-     ]
-   }
-   ```
+---
 
-4. Create operator directories with:
-   - `categories.json` - List of categories
-   - `[category].json` - Package data for each category
+## Workflows
 
-## Technical Details
+### Add operator
+Generates, in order: an **updated** `operators.json` (with the new operator
+appended), a new `<folder>/categories.json` for the chosen starter categories,
+and an empty `<folder>/<category>.json` for each. You get copy buttons and
+GitHub "create file" deep links for each.
 
-- **Frontend Framework**: Vanilla JavaScript (No dependencies)
-- **Styling**: CSS3 with modern gradients and animations
-- **Data Source**: GitHub Raw Content API
-- **Hosting**: GitHub Pages
-- **Browser Support**: All modern browsers
+### Add category
+Updates `categories.json` and creates the new empty category file.
+
+### Add / Edit / Duplicate / Delete package
+The editor binds to a canonical package with a **live JSON preview** and inline
+validation. Saving produces the **complete** updated category file (preserving
+the original `category`/`meta` envelope) with the exact repo path, ready to
+commit. The on‑screen table updates optimistically so it feels live.
+
+Because GitHub Pages is static, the dashboard cannot write to the repo
+directly. Each save shows the precise file path, the JSON to paste, a **Copy
+JSON** button, and a **Create/Edit on GitHub** deep link.
+
+---
+
+## States & warnings
+
+- Clear **loading / empty / error** states throughout.
+- Warning when a country is listed in `countries.json` but its
+  `operators.json` folder is missing.
+- Warning when a category is listed in `categories.json` but its file is
+  missing (or contains invalid JSON).
+
+---
+
+## Real statistics
+
+Counts are computed from the repo, not hardcoded. To avoid hundreds of
+guaranteed 404s on load, the dashboard asks the GitHub contents API **once**
+which top‑level folders exist, then scans only populated countries. If the API
+is rate‑limited, totals degrade gracefully to "—" while the countries count
+(from `countries.json`) is always shown.
+
+---
+
+## Repository issues fixed / flagged during this work
+
+1. **Invalid JSON** — `pakistan/jazz/data.json` contained JavaScript‑style
+   `// comments` and a stray blank line, which made `JSON.parse` (and the live
+   site) fail for the entire Data category. **Fixed**: converted to valid JSON
+   while keeping the intentional mixed‑schema test packages.
+2. **Country id ≠ folder name** — `countries.json` uses a `file` path
+   (`pakistan/operators.json`) while the country `id` is `pk`. The old code
+   fetched `${id}/operators.json` (`pk/operators.json`), which 404s. **Fixed**:
+   the folder/base path is now always derived from the `file` field.
+3. **Hardcoded statistics** — the old UI hardcoded "197 countries" and "100+"
+   packages. The repo actually indexes **196** countries. **Fixed**: all stats
+   are computed live.
+4. **Dead dependency** — `js-yaml` was loaded from a CDN but never used.
+   **Removed**.
+5. **No editing workflow** — the old "Add Package" tab only printed JSON for a
+   single object with no edit/duplicate/delete, no operator/category creation,
+   and no validation. **Replaced** with the full editor + workflows above.
+6. **Data consistency to address in the repo** (not code bugs):
+   - Operators listed in `pakistan/operators.json` (zong, ufone, telenor,
+     scom, rox, onic) have **no folders yet** — the dashboard surfaces these as
+     `0` counts and missing‑file warnings until their folders are created.
+   - Mixed schema keys across packages should ideally be normalized at rest;
+     the mapper handles them at read time, and re‑saving any package through
+     the editor writes it back in canonical form.
+
+---
 
 ## Development
 
-To modify the dashboard:
+Edit files under `docs/` and push to `main`; GitHub Pages serves them. To run
+locally:
 
-1. Edit files in the `docs/` directory
-2. Push changes to `main` branch
-3. Changes are live within seconds
+```bash
+cd docs
+python3 -m http.server 8000
+# open http://localhost:8000
+```
 
-## Limitations
+The app fetches live data from the repository's raw CDN, so local runs show the
+same data as production.
 
-- ⚠️ Adding packages requires manual GitHub editing or PR creation
-- ⚠️ Requires public repository for API access
-- ⚠️ GitHub API rate limiting applies (60 requests/hour unauthenticated)
+## Technical notes
 
-## Future Enhancements
-
-- [ ] Direct GitHub API integration for package creation
-- [ ] User authentication with GitHub
-- [ ] Real-time data validation
-- [ ] Package export (CSV, Excel)
-- [ ] Price comparison tools
-- [ ] Package recommendations
-- [ ] Multi-language support
-- [ ] Dark mode theme
-
-## Contributing
-
-To add or update packages:
-
-1. Use the "Add Package" form to generate JSON
-2. Fork the repository
-3. Add/edit the appropriate JSON files
-4. Submit a pull request
-
-## License
-
-This project is open source and available for anyone to use and modify.
-
-## Support
-
-For issues or questions, please open a GitHub issue in the repository.
+- **Stack:** plain HTML + CSS + vanilla JS (ES modules). No framework, no build
+  step, no backend.
+- **Browser support:** modern browsers (ES modules required).
+- **Rate limits:** the unauthenticated GitHub contents API allows 60
+  requests/hour; the dashboard caches responses and degrades gracefully.

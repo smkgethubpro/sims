@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM Packages Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 SIM Packages Manager</h1>
+            <p>Manage mobile operator packages across 197 countries</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="browse">Browse</button>
+            <button class="tab-btn" data-tab="add">Add Package</button>
+            <button class="tab-btn" data-tab="stats">Statistics</button>
+            <button class="tab-btn" data-tab="docs">Documentation</button>
+        </nav>
+
+        <!-- BROWSE TAB -->
+        <div id="browse" class="tab-content active">
+            <div class="browse-container">
+                <div class="filter-section">
+                    <h3>Filter & Search</h3>
+                    <div class="filter-group">
+                        <label>Country:</label>
+                        <select id="countrySelect" onchange="loadOperators()">
+                            <option value="">Select a country...</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Operator:</label>
+                        <select id="operatorSelect" onchange="loadCategories()">
+                            <option value="">Select operator...</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <select id="categorySelect" onchange="loadPackages()">
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="packages-section" id="packagesSection" style="display:none;">
+                    <h3>Available Packages</h3>
+                    <div id="packagesList" class="packages-grid"></div>
+                </div>
+
+                <div id="noSelection" class="no-selection">
+                    👈 Select a country to get started
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD PACKAGE TAB -->
+        <div id="add" class="tab-content">
+            <div class="form-container">
+                <h3>Add New Package</h3>
+                <form id="addPackageForm">
+                    <div class="form-group">
+                        <label>Country *</label>
+                        <select id="addCountry" required>
+                            <option value="">Select country...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Operator *</label>
+                        <input type="text" id="addOperator" placeholder="e.g., Jazz, Zong" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="addCategory" required>
+                            <option value="">Select category...</option>
+                            <option value="data">Data Packages</option>
+                            <option value="social">Social Packages</option>
+                            <option value="voice">Voice Packages</option>
+                            <option value="roaming">Roaming Packages</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Package Name *</label>
+                        <input type="text" id="addName" placeholder="e.g., Monthly Supreme" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price (PKR) *</label>
+                        <input type="number" id="addPrice" placeholder="e.g., 1738" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Data Amount *</label>
+                        <input type="text" id="addData" placeholder="e.g., 25GB" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Validity *</label>
+                        <input type="text" id="addValidity" placeholder="e.g., 30 Days" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>USSD Code *</label>
+                        <input type="text" id="addCode" placeholder="e.g., *117*30#" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Features (Optional)</label>
+                        <textarea id="addFeatures" placeholder="e.g., YouTube Unlimited, 4G Speed" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Add Package</button>
+                    <p id="formMessage" class="form-message"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- STATISTICS TAB -->
+        <div id="stats" class="tab-content">
+            <div class="stats-container">
+                <h3>Repository Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statCountries">197</div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statOperators">-</div>
+                        <div class="stat-label">Total Operators</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statPackages">-</div>
+                        <div class="stat-label">Total Packages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statCategories">-</div>
+                        <div class="stat-label">Categories</div>
+                    </div>
+                </div>
+                <div id="statsDetails" class="stats-details"></div>
+            </div>
+        </div>
+
+        <!-- DOCUMENTATION TAB -->
+        <div id="docs" class="tab-content">
+            <div class="docs-container">
+                <h3>📖 Documentation</h3>
+                
+                <section class="doc-section">
+                    <h4>Structure Overview</h4>
+                    <p>The repository follows a hierarchical structure:</p>
+                    <pre><code>root/
+├── countries.json          # Main index of all countries
+└── [country]/
+    ├── operators.json      # List of operators in this country
+    └── [operator]/
+        ├── categories.json  # Package categories
+        └── [category].json  # Actual packages</code></pre>
+                </section>
+
+                <section class="doc-section">
+                    <h4>Package JSON Format</h4>
+                    <pre><code>{
+  "name": "Package Name",
+  "price": "1738",
+  "cost": 1738,
+  "code": "*117*30#",
+  "data": "25GB",
+  "data_amount": 25,
+  "unit": "GB",
+  "validity": "30 Days",
+  "duration_days": 30,
+  "network": "Jazz",
+  "active": true
+}</code></pre>
+                </section>
+
+                <section class="doc-section">
+                    <h4>How to Add a Country</h4>
+                    <ol>
+                        <li>Add entry to <code>countries.json</code></li>
+                        <li>Create <code>[country]/operators.json</code></li>
+                        <li>Create operator folders with categories</li>
+                        <li>Add package JSON files in each category</li>
+                    </ol>
+                </section>
+
+                <section class="doc-section">
+                    <h4>Supported Categories</h4>
+                    <ul>
+                        <li><strong>data</strong> - Internet/Data packages</li>
+                        <li><strong>social</strong> - Social media focused packages</li>
+                        <li><strong>voice</strong> - Call minutes packages</li>
+                        <li><strong>roaming</strong> - International roaming packages</li>
+                        <li><strong>combo</strong> - Mixed services packages</li>
+                    </ul>
+                </section>
+
+                <section class="doc-section">
+                    <h4>Tips for Maintenance</h4>
+                    <ul>
+                        <li>Keep prices updated regularly</li>
+                        <li>Use consistent naming conventions</li>
+                        <li>Include USSD codes for activation</li>
+                        <li>Mark inactive packages with <code>"active": false</code></li>
+                        <li>Document special features and limitations</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>SIM Packages Manager | Data for 197 Countries</p>
+        <p><a href="https://github.com/smkgethubpro/sims" target="_blank">View on GitHub</a></p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

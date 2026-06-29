@@ -63,6 +63,107 @@ export function showSaveInstructions({ title, files, note }) {
 }
 
 /**
+ * Edit Country name workflow. Rewrites the matching entry in countries.json
+ * (only the display name; id/file are kept stable to avoid breaking paths).
+ */
+export function openEditCountry({ country, allCountries, onComplete }) {
+  const form = el('form', { class: 'pkg-form' });
+  const nameField = textField('Country name', 'e.g. Pakistan', true);
+  nameField.input.value = country.name;
+  form.appendChild(nameField.wrap);
+  form.appendChild(el('p', { class: 'field__hint', html: `ID <code>${esc(country.id)}</code> and path <code>${esc(country.file)}</code> are kept unchanged so existing files don't break.` }));
+  const errBox = el('p', { class: 'field__error' });
+  form.appendChild(errBox);
+
+  const saveBtn = el('button', { class: 'btn btn--primary', type: 'button', text: 'Generate update' });
+  const foot = el('div', { class: 'btn-row btn-row--end' }, [
+    el('button', { class: 'btn btn--ghost', type: 'button', text: 'Cancel', onClick: closeModal }),
+    saveBtn,
+  ]);
+
+  saveBtn.addEventListener('click', () => {
+    const name = nameField.input.value.trim();
+    if (!name) { errBox.textContent = 'Country name is required.'; return; }
+    const updated = { countries: allCountries.map((c) => (c.id === country.id ? { ...c, name } : c)) };
+    closeModal();
+    showSaveInstructions({
+      title: `Rename country: ${country.name} → ${name}`,
+      note: `This is the <strong>complete</strong> updated <code>countries.json</code> with only the display name changed.`,
+      files: [{ path: 'countries.json', isNew: false, json: JSON.stringify(updated, null, 2) }],
+    });
+    if (onComplete) onComplete({ ...country, name });
+  });
+
+  openModal({ title: `Edit ${country.name}`, body: form, footer: foot });
+}
+
+/**
+ * Delete Country workflow. Removes the entry from countries.json and reminds
+ * the user to delete the country's folder on GitHub.
+ */
+export function openDeleteCountry({ country, allCountries, base, onComplete }) {
+  const updated = { countries: allCountries.filter((c) => c.id !== country.id) };
+  const folder = base || (country.file ? country.file.replace(/\/operators\.json$/i, '') : country.id);
+  showSaveInstructions({
+    title: `Delete country: ${country.name}`,
+    note: `Two steps: (1) commit the updated <code>countries.json</code> below (entry removed), then (2) delete the folder <code>${esc(folder)}/</code> on GitHub if it exists.`,
+    files: [{ path: 'countries.json', isNew: false, json: JSON.stringify(updated, null, 2) }],
+  });
+  if (onComplete) onComplete();
+}
+
+/**
+ * Edit Operator name workflow. Rewrites the matching operator's display name in
+ * operators.json (id/folder kept stable to avoid breaking paths).
+ */
+export function openEditOperator({ country, base, operator, existingOperators, onComplete }) {
+  const form = el('form', { class: 'pkg-form' });
+  const nameField = textField('Operator name', 'e.g. Jazz', true);
+  nameField.input.value = operator.name;
+  form.appendChild(nameField.wrap);
+  form.appendChild(el('p', { class: 'field__hint', html: `Folder <code>${esc(operator.folder || operator.id)}</code> is kept unchanged so package files don't break.` }));
+  const errBox = el('p', { class: 'field__error' });
+  form.appendChild(errBox);
+
+  const saveBtn = el('button', { class: 'btn btn--primary', type: 'button', text: 'Generate update' });
+  const foot = el('div', { class: 'btn-row btn-row--end' }, [
+    el('button', { class: 'btn btn--ghost', type: 'button', text: 'Cancel', onClick: closeModal }),
+    saveBtn,
+  ]);
+
+  saveBtn.addEventListener('click', () => {
+    const name = nameField.input.value.trim();
+    if (!name) { errBox.textContent = 'Operator name is required.'; return; }
+    const key = operator.folder || operator.id;
+    const updated = { operators: existingOperators.map((o) => ((o.folder || o.id) === key ? { ...o, name } : o)) };
+    closeModal();
+    showSaveInstructions({
+      title: `Rename operator: ${operator.name} → ${name}`,
+      note: `This is the <strong>complete</strong> updated <code>${esc(base)}/operators.json</code> with only the display name changed.`,
+      files: [{ path: `${base}/operators.json`, isNew: false, json: JSON.stringify(updated, null, 2) }],
+    });
+    if (onComplete) onComplete({ ...operator, name });
+  });
+
+  openModal({ title: `Edit ${operator.name}`, body: form, footer: foot });
+}
+
+/**
+ * Delete Operator workflow. Removes the operator from operators.json and
+ * reminds the user to delete its folder on GitHub.
+ */
+export function openDeleteOperator({ base, operator, existingOperators, onComplete }) {
+  const key = operator.folder || operator.id;
+  const updated = { operators: existingOperators.filter((o) => (o.folder || o.id) !== key) };
+  showSaveInstructions({
+    title: `Delete operator: ${operator.name}`,
+    note: `Two steps: (1) commit the updated <code>${esc(base)}/operators.json</code> below (operator removed), then (2) delete the folder <code>${esc(base)}/${esc(key)}/</code> on GitHub if it exists.`,
+    files: [{ path: `${base}/operators.json`, isNew: false, json: JSON.stringify(updated, null, 2) }],
+  });
+  if (onComplete) onComplete();
+}
+
+/**
  * Add Operator workflow. Produces:
  *   - updated operators.json (append new operator)
  *   - new <folder>/categories.json (with chosen starter categories)

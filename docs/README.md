@@ -116,11 +116,27 @@ GitHub "create file" deep links for each.
 ### Add category
 Updates `categories.json` and creates the new empty category file.
 
+### Edit / delete country & operator
+- Each country row (left panel) and operator card (middle panel) has inline
+  **edit** (rename) and **delete** actions.
+- Renaming only changes the display `name`; the `id`/`folder`/`file` paths are
+  kept stable so existing files don't break.
+- Deleting removes the entry from `countries.json` / `operators.json` and
+  reminds you to delete the corresponding folder on GitHub.
+
 ### Add / Edit / Duplicate / Delete package
-The editor binds to a canonical package with a **live JSON preview** and inline
-validation. Saving produces the **complete** updated category file (preserving
-the original `category`/`meta` envelope) with the exact repo path, ready to
-commit. The on‑screen table updates optimistically so it feels live.
+The editor treats **only `name` as a fixed, required field**. Every other
+property is an editable **key = value** row — you can rename the key, edit the
+value, remove a row, or **+ Add field** for brand‑new keys. This makes the
+package schema fully flexible while guaranteeing a `name`. Values that look like
+booleans/numbers (`true`, `false`, `30`) are stored as real JSON types; untouched
+complex values (objects/arrays) are preserved exactly.
+
+A **live JSON preview** shows the exact object that will be written. Saving
+produces the **complete** updated category file (preserving the original
+`category`/`meta` envelope and every package's custom keys) with the exact repo
+path, ready to commit. The on‑screen table updates optimistically so it feels
+live. The table columns still use the normalized canonical view for display.
 
 Because GitHub Pages is static, the dashboard cannot write to the repo
 directly. Each save shows the precise file path, the JSON to paste, a **Copy

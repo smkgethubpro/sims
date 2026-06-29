@@ -8,10 +8,13 @@
  */
 
 import * as api from './api.js';
-import { normalizePackages, serializePackage } from './schema.js';
+import { normalizePackage } from './schema.js';
 import { el, esc, $, loadingState, emptyState, errorState, warningBanner, toast } from './ui.js';
 import { openPackageEditor } from './editor.js';
-import { openAddOperator, openAddCategory, showSaveInstructions } from './workflows.js';
+import {
+  openAddOperator, openAddCategory, showSaveInstructions,
+  openEditCountry, openDeleteCountry, openEditOperator, openDeleteOperator,
+} from './workflows.js';
 import { confirmDialog } from './ui.js';
 
 const state = {
@@ -20,7 +23,7 @@ const state = {
   operators: [],
   base: '',
   categories: [],
-  packages: [],          // normalized, for current category
+  packages: [],          // RAW package objects (custom keys preserved) for current category
   rawCategoryFile: null, // raw loaded file (to preserve meta on save)
   categoryPath: '',
   selected: { country: null, operator: null, category: null },
@@ -74,7 +77,7 @@ async function loadCountries() {
     state.countries = await api.getCountries();
     state.filteredCountries = state.countries;
     dom.statCountries.textContent = state.countries.length;
-    setRepoStatus('ok', `${state.countries.length} countries indexed`);
+    setRepoStatus('ok', 'Connected');
     renderCountryList();
   } catch (e) {
     dom.countryList.innerHTML = errorState('Could not load countries.json', e.message);
@@ -95,15 +98,30 @@ function renderCountryList() {
   }
   dom.countryList.innerHTML = '';
   list.forEach((c) => {
-    const item = el('button', {
+    const row = el('div', {
       class: 'nav-item' + (state.selected.country === c ? ' nav-item--active' : ''),
-      type: 'button',
-    }, [
+    });
+    const main = el('button', { class: 'nav-item__main', type: 'button' }, [
       el('span', { class: 'nav-item__name', text: c.name }),
       el('span', { class: 'nav-item__meta', text: c.id.toUpperCase() }),
     ]);
-    item.addEventListener('click', () => selectCountry(c));
-    dom.countryList.appendChild(item);
+    main.addEventListener('click', () => selectCountry(c));
+
+    const actions = el('div', { class: 'nav-item__actions' }, [
+      iconBtn('✏️', `Edit ${c.name}`, (e) => {
+        e.stopPropagation();
+        openEditCountry({ country: c, allCountries: state.countries, onComplete: () => {} });
+      }, 'icon-btn--xs'),
+      iconBtn('🗑', `Delete ${c.name}`, async (e) => {
+        e.stopPropagation();
+        const ok = await confirmDialog(`Remove <strong>${esc(c.name)}</strong> from countries.json? You'll also need to delete its folder on GitHub.`, { confirmText: 'Delete', danger: true });
+        if (ok) openDeleteCountry({ country: c, allCountries: state.countries, base: api.countryBasePath(c), onComplete: () => {} });
+      }, 'icon-btn--xs icon-btn--danger'),
+    ]);
+
+    row.appendChild(main);
+    row.appendChild(actions);
+    dom.countryList.appendChild(row);
   });
 }
 
@@ -177,20 +195,42 @@ function bindOperatorHeader(country) {
 }
 
 function operatorCard(country, op) {
+  const key = op.folder || op.id;
   const card = el('div', {
     class: 'op-card' + (state.selected.operator === op ? ' op-card--active' : ''),
-    'data-op': op.folder || op.id,
+    'data-op': key,
   });
+
   const head = el('button', { class: 'op-card__head', type: 'button' }, [
-    el('div', {}, [
+    el('div', { class: 'op-card__info' }, [
       el('span', { class: 'op-card__name', text: op.name }),
-      el('span', { class: 'op-card__folder path-hint', text: op.folder || op.id }),
+      el('span', { class: 'op-card__folder path-hint', text: key }),
     ]),
-    el('span', { class: 'badge badge--count', id: `count_${op.folder || op.id}`, text: '…' }),
+    el('span', { class: 'badge badge--count', id: `count_${key}`, text: '…' }),
   ]);
   head.addEventListener('click', () => selectOperator(country, op, card));
-  card.appendChild(head);
-  card.appendChild(el('div', { class: 'op-card__cats', id: `cats_${op.folder || op.id}` }));
+
+  const actions = el('div', { class: 'op-card__actions' }, [
+    iconBtn('✏️', `Edit ${op.name}`, (e) => {
+      e.stopPropagation();
+      openEditOperator({
+        country, base: state.base || api.countryBasePath(country),
+        operator: op, existingOperators: state.operators, onComplete: () => {},
+      });
+    }, 'icon-btn--xs'),
+    iconBtn('🗑', `Delete ${op.name}`, async (e) => {
+      e.stopPropagation();
+      const ok = await confirmDialog(`Remove <strong>${esc(op.name)}</strong> from operators.json? You'll also need to delete its folder on GitHub.`, { confirmText: 'Delete', danger: true });
+      if (ok) openDeleteOperator({
+        base: state.base || api.countryBasePath(country),
+        operator: op, existingOperators: state.operators, onComplete: () => {},
+      });
+    }, 'icon-btn--xs icon-btn--danger'),
+  ]);
+
+  const topRow = el('div', { class: 'op-card__top' }, [head, actions]);
+  card.appendChild(topRow);
+  card.appendChild(el('div', { class: 'op-card__cats', id: `cats_${key}` }));
   return card;
 }
 
@@ -284,7 +324,8 @@ async function selectCategory(country, op, cat) {
       return;
     }
 
-    state.packages = normalizePackages(raw.packages || []);
+    // Keep RAW objects so custom keys survive edit/save; normalize only for display.
+    state.packages = Array.isArray(raw.packages) ? raw.packages.map((p) => ({ ...p })) : [];
     renderPackages(country, op, cat);
   } catch (e) {
     $('#pkgPanelBody').innerHTML = errorState('Could not load packages', e.message);
@@ -335,34 +376,36 @@ function renderPackages(country, op, cat) {
   body.appendChild(table);
 }
 
-function packageRow(pkg, index, country, op, cat) {
+function packageRow(rawPkg, index, country, op, cat) {
+  // Normalize only for display; the raw object (with custom keys) is preserved.
+  const view = normalizePackage(rawPkg);
   const tr = el('tr', {});
-  tr.appendChild(el('td', { class: 'td-name', text: pkg.name || '—' }));
-  tr.appendChild(el('td', { text: pkg.price ? `${pkg.price}` : '—' }));
-  tr.appendChild(el('td', { text: pkg.data || '—' }));
-  tr.appendChild(el('td', { text: pkg.validity || '—' }));
-  tr.appendChild(el('td', {}, [el('code', { class: 'code-pill', text: pkg.code || '—' })]));
+  tr.appendChild(el('td', { class: 'td-name', text: view.name || '—' }));
+  tr.appendChild(el('td', { text: view.price ? `${view.price}` : '—' }));
+  tr.appendChild(el('td', { text: view.data || '—' }));
+  tr.appendChild(el('td', { text: view.validity || '—' }));
+  tr.appendChild(el('td', {}, [el('code', { class: 'code-pill', text: view.code || '—' })]));
   tr.appendChild(el('td', {}, [
     el('span', {
-      class: 'badge ' + (pkg.active === false ? 'badge--off' : 'badge--on'),
-      text: pkg.active === false ? 'Inactive' : 'Active',
+      class: 'badge ' + (view.active === false ? 'badge--off' : 'badge--on'),
+      text: view.active === false ? 'Inactive' : 'Active',
     }),
   ]));
 
   const actions = el('div', { class: 'row-actions' }, [
-    iconBtn('👁', 'Preview', () => previewPackage(pkg)),
+    iconBtn('👁', 'Preview', () => previewPackage(rawPkg)),
     iconBtn('✏️', 'Edit', () => openPackageEditor({
-      mode: 'edit', pkg, pathHint: state.categoryPath, networkDefault: op.name,
+      mode: 'edit', pkg: rawPkg, pathHint: state.categoryPath, networkDefault: op.name,
       onSave: (updated) => persistPackage({ index, pkg: updated, country, op, cat }),
     })),
     iconBtn('⧉', 'Duplicate', () => openPackageEditor({
       mode: 'duplicate',
-      pkg: { ...serializePackage(pkg), name: `${pkg.name} (copy)` },
+      pkg: { ...rawPkg, name: `${rawPkg.name || view.name || 'Package'} (copy)` },
       pathHint: state.categoryPath, networkDefault: op.name,
       onSave: (dup) => persistPackage({ index: -1, pkg: dup, country, op, cat }),
     })),
     iconBtn('🗑', 'Delete', async () => {
-      const ok = await confirmDialog(`Delete <strong>${esc(pkg.name)}</strong> from this category?`, { confirmText: 'Delete', danger: true });
+      const ok = await confirmDialog(`Delete <strong>${esc(view.name || 'this package')}</strong> from this category?`, { confirmText: 'Delete', danger: true });
       if (ok) persistPackage({ index, pkg: null, country, op, cat, remove: true });
     }, 'icon-btn--danger'),
   ]);
@@ -376,11 +419,11 @@ function iconBtn(glyph, title, onClick, extra = '') {
   return b;
 }
 
-function previewPackage(pkg) {
-  const json = JSON.stringify(serializePackage(pkg), null, 2);
+function previewPackage(rawPkg) {
+  const json = JSON.stringify(rawPkg, null, 2);
   showSaveInstructions({
-    title: pkg.name || 'Package preview',
-    note: 'Normalized canonical JSON for this package.',
+    title: (rawPkg && rawPkg.name) || 'Package preview',
+    note: 'The exact JSON stored for this package (all keys preserved).',
     files: [{ path: state.categoryPath, json, isNew: false }],
   });
 }
@@ -388,10 +431,11 @@ function previewPackage(pkg) {
 /**
  * Apply an add/edit/duplicate/delete to the in-memory package list, then show
  * the resulting full category file JSON ready to commit (static site = no
- * direct write). Preserves the original file's `category`/`meta` envelope.
+ * direct write). Preserves the original file's `category`/`meta` envelope and
+ * every package's custom keys.
  */
 function persistPackage({ index, pkg, country, op, cat, remove = false }) {
-  const list = state.packages.map((p) => serializePackage(p));
+  const list = state.packages.map((p) => ({ ...p })); // raw objects, custom keys intact
   if (remove) {
     list.splice(index, 1);
   } else if (index >= 0) {
@@ -412,7 +456,7 @@ function persistPackage({ index, pkg, country, op, cat, remove = false }) {
 
   // Optimistically update the UI so it feels live.
   state.rawCategoryFile = envelope;
-  state.packages = normalizePackages(list);
+  state.packages = list;
   renderPackages(country, op, cat);
   loadOperatorCount(country, op);
 
@@ -470,13 +514,14 @@ async function loadStatistics() {
   if (folders) {
     dom.statOperators.textContent = String(operators);
     dom.statPackages.textContent = String(packages);
-    setRepoStatus('ok', `${state.countries.length} countries · ${scanned} populated · ${operators} operators · ${packages} packages`);
+    setRepoStatus('ok', 'Connected');
   } else {
     // Graceful: show countries count, defer operator/package totals.
     dom.statOperators.textContent = '—';
     dom.statPackages.textContent = '—';
-    setRepoStatus('ok', `${state.countries.length} countries indexed · totals unavailable (API limit)`);
+    setRepoStatus('ok', 'Connected');
   }
+  void scanned;
 }
 
 function setRepoStatus(kind, text) {

@@ -70,8 +70,6 @@
       "validity": "30 Days",
       "only_apps": ["Facebook", "WhatsApp", "YouTube"]
     },
-
-    // EXTRA TEST PACKAGES
     {
       "name": "Daily Light Pack",
       "price": "50",

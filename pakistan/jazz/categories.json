@@ -1,0 +1,9 @@
+{
+  "categories": [
+    {
+      "id": "special",
+      "name": "Special",
+      "file": "special.json"
+    }
+  ]
+}

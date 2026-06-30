@@ -6,14 +6,5 @@
     "version": 2,
     "currency": "PKR"
   },
-  "packages": [
-    {
-      "name": "Unlimited Social Pack",
-      "price": "499",
-      "code": "*999#",
-      "data": "Unlimited",
-      "validity": "30 Days",
-      "fair_usage_policy": "2GB/day"
-    }
-  ]
+  "packages": []
 }

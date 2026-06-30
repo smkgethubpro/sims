@@ -2,13 +2,6 @@
   "category": "social",
   "packages": [
     {
-      "name": "WhatsApp Bundle",
-      "price": "50",
-      "code": "*114*1#",
-      "data": "2GB WhatsApp",
-      "validity": "7 Days"
-    },
-    {
       "name": "Social Plus",
       "price": "100",
       "code": "*114*2#",

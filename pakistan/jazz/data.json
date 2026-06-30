@@ -8,15 +8,6 @@
   },
   "packages": [
     {
-      "title": "Weekly Mega",
-      "price": "350",
-      "amount": 350,
-      "dial_code": "*117*14#",
-      "data": "8GB",
-      "validity_days": 7,
-      "network": "Jazz"
-    },
-    {
       "package_name": "Jazz Weekly Freedom",
       "price": "652",
       "code": "*711#",

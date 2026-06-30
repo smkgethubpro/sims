@@ -14,6 +14,7 @@ import { openPackageEditor } from './editor.js';
 import {
   openAddOperator, openAddCategory, showSaveInstructions,
   openEditCountry, openDeleteCountry, openEditOperator, openDeleteOperator,
+  openEditCategory, openDeleteCategory,
 } from './workflows.js';
 import { confirmDialog, openModal, closeModal } from './ui.js';
 import { requireAccess } from './lock.js';
@@ -58,6 +59,7 @@ function cacheDom() {
   dom.statOperators = $('#statOperators');
   dom.statPackages = $('#statPackages');
   dom.settingsBtn = $('#settingsBtn');
+  dom.refreshBtn = $('#refreshBtn');
 }
 
 function bindGlobalEvents() {
@@ -67,7 +69,41 @@ function bindGlobalEvents() {
     renderCountryList();
   });
   if (dom.settingsBtn) dom.settingsBtn.addEventListener('click', openSettings);
+  if (dom.refreshBtn) dom.refreshBtn.addEventListener('click', hardRefresh);
   refreshSettingsIndicator();
+}
+
+/* -------------------------------- refresh --------------------------------- */
+
+/**
+ * Real refresh: bypass the raw GitHub CDN cache (cache-buster) and the in-memory
+ * cache, then reload the data and re-render whatever the user was looking at —
+ * without a full page reload. Fixes "I committed a change but the site still
+ * shows the old data after a browser refresh".
+ */
+async function hardRefresh() {
+  const btn = dom.refreshBtn;
+  if (btn) { btn.disabled = true; btn.textContent = '↻ Refreshing…'; }
+  api.hardRefresh();
+  toast('Fetching latest data from GitHub…', 'info');
+
+  const sel = state.selected;
+  try {
+    await loadCountries();
+
+    // Re-select the previously selected country/operator/category if possible,
+    // matching by id so the new (fresh) objects are used.
+    if (sel.country) {
+      const country = state.countries.find((c) => c.id === sel.country.id) || sel.country;
+      await selectCountry(country, true);
+    }
+    loadStatistics();
+    toast('✅ Refreshed', 'success');
+  } catch (e) {
+    toast(`Refresh failed: ${e.message}`, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
+  }
 }
 
 /* ------------------------------- settings --------------------------------- */
@@ -346,17 +382,38 @@ async function selectOperator(country, op, cardNode) {
 
     const chipRow = el('div', { class: 'chip-row' });
     categories.forEach((cat) => {
-      const chip = el('button', { class: 'chip', type: 'button', text: cat.name });
+      const chipWrap = el('div', { class: 'cat-chip' });
+      const chip = el('button', { class: 'chip cat-chip__main', type: 'button', text: cat.name });
       chip.addEventListener('click', () => {
         chipRow.querySelectorAll('.chip').forEach((c) => c.classList.remove('chip--on'));
         chip.classList.add('chip--on');
         selectCategory(country, op, cat);
       });
-      chipRow.appendChild(chip);
+      const editBtn = iconBtn('✏️', `Edit ${cat.name}`, (e) => {
+        e.stopPropagation();
+        openEditCategory({
+          base: state.base || api.countryBasePath(country),
+          operator: op, category: cat, existingCategories: categories,
+          onComplete: () => selectOperator(country, op, cardNode),
+        });
+      }, 'icon-btn--xs');
+      const delBtn = iconBtn('🗑', `Delete ${cat.name}`, async (e) => {
+        e.stopPropagation();
+        const ok = await confirmDialog(`Delete category <strong>${esc(cat.name)}</strong> from ${esc(op.name)}? Its package file will also be removed.`, { confirmText: 'Delete', danger: true });
+        if (ok) openDeleteCategory({
+          base: state.base || api.countryBasePath(country),
+          operator: op, category: cat, existingCategories: categories,
+          onComplete: () => selectOperator(country, op, cardNode),
+        });
+      }, 'icon-btn--xs icon-btn--danger');
+      const actions = el('div', { class: 'cat-chip__actions' }, [editBtn, delBtn]);
+      chipWrap.appendChild(chip);
+      chipWrap.appendChild(actions);
+      chipRow.appendChild(chipWrap);
     });
     const addChip = el('button', { class: 'chip chip--add', type: 'button', text: '+ Category' });
     addChip.addEventListener('click', () => openAddCategory({
-      country, base: state.base, operator: op, existingCategories: categories, onComplete: () => {},
+      country, base: state.base, operator: op, existingCategories: categories, onComplete: () => selectOperator(country, op, cardNode),
     }));
     chipRow.appendChild(addChip);
     catHost.appendChild(chipRow);

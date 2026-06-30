@@ -29,8 +29,23 @@ function editFileUrl(path) {
 }
 
 /** Reusable block that shows a path + JSON + copy + GitHub link. */
-function fileBlock({ path, json, isNew = true }) {
+function fileBlock(file) {
+  const { path, json, isNew = true } = file;
   const wrap = el('div', { class: 'file-block' });
+
+  // A "delete" entry has no JSON; just show where to delete the file manually.
+  if (file.delete) {
+    wrap.appendChild(el('div', { class: 'file-block__head' }, [
+      el('code', { class: 'path-hint', text: path }),
+      el('a', {
+        class: 'btn btn--danger btn--sm', target: '_blank', rel: 'noopener',
+        href: editFileUrl(path), text: 'Delete on GitHub ↗',
+      }),
+    ]));
+    wrap.appendChild(el('p', { class: 'field__hint', text: 'Open this file on GitHub and use the “Delete file” option.' }));
+    return wrap;
+  }
+
   wrap.appendChild(el('div', { class: 'file-block__head' }, [
     el('code', { class: 'path-hint', text: path }),
     el('div', { class: 'btn-row' }, [
@@ -356,6 +371,62 @@ export function openAddCategory({ country, base, operator, existingCategories, o
   });
 
   openModal({ title: `Add category to ${operator.name}`, body: form, footer: foot });
+}
+
+/**
+ * Edit Category name workflow. Rewrites the matching category's display name in
+ * the operator's categories.json. The id/file are kept stable so the package
+ * file path does not break.
+ */
+export function openEditCategory({ base, operator, category, existingCategories, onComplete }) {
+  const folder = operator.folder || operator.id;
+  const form = el('form', { class: 'pkg-form' });
+  const nameField = textField('Category name', 'e.g. Voice Packages', true);
+  nameField.input.value = category.name;
+  form.appendChild(nameField.wrap);
+  form.appendChild(el('p', { class: 'field__hint', html: `ID <code>${esc(category.id)}</code> and file <code>${esc(category.file || `${category.id}.json`)}</code> are kept unchanged so the package file doesn't break.` }));
+  const errBox = el('p', { class: 'field__error' });
+  form.appendChild(errBox);
+
+  const saveBtn = el('button', { class: 'btn btn--primary', type: 'button', text: 'Generate update' });
+  const foot = el('div', { class: 'btn-row btn-row--end' }, [
+    el('button', { class: 'btn btn--ghost', type: 'button', text: 'Cancel', onClick: closeModal }),
+    saveBtn,
+  ]);
+
+  saveBtn.addEventListener('click', () => {
+    const name = nameField.input.value.trim();
+    if (!name) { errBox.textContent = 'Category name is required.'; return; }
+    const updated = { categories: existingCategories.map((c) => (c.id === category.id ? { ...c, name } : c)) };
+    closeModal();
+    showSaveInstructions({
+      title: `Rename category: ${category.name} → ${name}`,
+      note: `This is the <strong>complete</strong> updated <code>${esc(base)}/${esc(folder)}/categories.json</code> with only the display name changed.`,
+      files: [{ path: `${base}/${folder}/categories.json`, isNew: false, json: JSON.stringify(updated, null, 2) }],
+    });
+    if (onComplete) onComplete({ ...category, name });
+  });
+
+  openModal({ title: `Edit ${category.name}`, body: form, footer: foot });
+}
+
+/**
+ * Delete Category workflow. Removes the category from categories.json and
+ * reminds the user to delete its package file on GitHub.
+ */
+export function openDeleteCategory({ base, operator, category, existingCategories, onComplete }) {
+  const folder = operator.folder || operator.id;
+  const file = category.file || `${category.id}.json`;
+  const updated = { categories: existingCategories.filter((c) => c.id !== category.id) };
+  showSaveInstructions({
+    title: `Delete category: ${category.name}`,
+    note: `Removing <strong>${esc(category.name)}</strong>: the updated <code>${esc(base)}/${esc(folder)}/categories.json</code> is committed and its package file <code>${esc(file)}</code> is deleted.`,
+    files: [
+      { path: `${base}/${folder}/categories.json`, isNew: false, json: JSON.stringify(updated, null, 2) },
+      { path: `${base}/${folder}/${file}`, delete: true },
+    ],
+  });
+  if (onComplete) onComplete();
 }
 
 /* ------------------------------- helpers ---------------------------------- */

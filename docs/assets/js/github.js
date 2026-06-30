@@ -114,7 +114,30 @@ export async function putFile({ path, content, message, sha = null }) {
 }
 
 /**
- * Commit a batch of files. Each file is { path, json, isNew }.
+ * Delete a file via the Contents API. Requires the file's current sha, which we
+ * look up first. If the file does not exist (404), this is a no-op.
+ * @param {object} opts
+ * @param {string} opts.path
+ * @param {string} opts.message
+ */
+export async function deleteFile({ path, message }) {
+  const sha = await getFileSha(path);
+  if (!sha) return null; // already gone
+
+  const res = await fetch(`${API}/${encodeURIPath(path)}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: message || `Delete ${path}`, sha, branch: BRANCH }),
+  });
+  if (!res.ok) {
+    throw await toError(res, `DELETE ${path}`);
+  }
+  return res.json();
+}
+
+/**
+ * Commit a batch of files. Each file is { path, json, isNew, delete }.
+ *   - delete === true → remove the file (DELETE; no-op if it doesn't exist)
  *   - isNew === true  → create (PUT without sha)
  *   - otherwise        → update: GET sha first, then PUT with that sha.
  *     (If the file turns out not to exist, we create it instead.)
@@ -122,7 +145,7 @@ export async function putFile({ path, content, message, sha = null }) {
  * Files are committed sequentially so order is deterministic (e.g. update
  * operators.json before creating the operator's nested files).
  *
- * @param {Array<{path:string, json:string, isNew?:boolean}>} files
+ * @param {Array<{path:string, json?:string, isNew?:boolean, delete?:boolean}>} files
  * @param {string} title  used to build commit messages
  * @returns {Promise<{committed:number}>}
  * @throws on the first failed file so the caller can fall back gracefully.
@@ -130,6 +153,11 @@ export async function putFile({ path, content, message, sha = null }) {
 export async function autoCommitFiles(files, title) {
   let committed = 0;
   for (const f of files) {
+    if (f.delete) {
+      await deleteFile({ path: f.path, message: commitMessage(title, f.path) });
+      committed += 1;
+      continue;
+    }
     // Determine sha: for "update" files, look up the current sha. For "new"
     // files, skip the lookup but still tolerate the case where it already
     // exists (then we need its sha to avoid a 422).

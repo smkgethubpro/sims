@@ -199,6 +199,12 @@ code, pre { font-family: var(--mono); }
 .chip--on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .chip--add { border-style: dashed; color: var(--accent); }
 
+/* category chip with edit/delete actions */
+.cat-chip { display: inline-flex; align-items: center; gap: 2px; }
+.cat-chip__actions { display: none; align-items: center; gap: 2px; }
+.cat-chip:hover .cat-chip__actions { display: inline-flex; }
+.cat-chip__actions .icon-btn { width: 22px; height: 22px; font-size: 11px; }
+
 /* ------------------------------ package table ----------------------------- */
 .pkg-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .pkg-table th {

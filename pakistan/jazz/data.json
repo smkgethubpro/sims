@@ -8,18 +8,6 @@
   },
   "packages": [
     {
-      "name": "Jazz Monthly Browser",
-      "price": "175",
-      "code": "*117*77#",
-      "data": "2.5GB",
-      "validity": "30 Days",
-      "only_apps": [
-        "Facebook",
-        "WhatsApp",
-        "YouTube"
-      ]
-    },
-    {
       "name": "Daily Light Pack",
       "price": "50",
       "code": "*111*1#",

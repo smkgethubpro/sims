@@ -19,6 +19,11 @@
       "id": "call",
       "name": "Call",
       "file": "call.json"
+    },
+    {
+      "id": "sms",
+      "name": "SMS",
+      "file": "sms.json"
     }
   ]
 }

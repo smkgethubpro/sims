@@ -8,14 +8,6 @@
   },
   "packages": [
     {
-      "name": "Daily Light Pack",
-      "price": "50",
-      "code": "*111*1#",
-      "data": "500MB",
-      "validity": "1 Day",
-      "type": "daily"
-    },
-    {
       "name": "Social Bundle",
       "price": "99",
       "code": "*123*5#",

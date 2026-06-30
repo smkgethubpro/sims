@@ -8,14 +8,6 @@
   },
   "packages": [
     {
-      "package_name": "Jazz Weekly Freedom",
-      "price": "652",
-      "code": "*711#",
-      "internet": "50GB",
-      "validity": "7 Days",
-      "category_tag": "weekly"
-    },
-    {
       "name": "Jazz Weekly X",
       "price": "608",
       "code": "*852#",

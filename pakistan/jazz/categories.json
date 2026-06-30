@@ -9,6 +9,11 @@
       "id": "data",
       "name": "Data",
       "file": "data.json"
+    },
+    {
+      "id": "social",
+      "name": "Social",
+      "file": "social.json"
     }
   ]
 }

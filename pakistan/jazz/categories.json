@@ -14,6 +14,11 @@
       "id": "social",
       "name": "Social",
       "file": "social.json"
+    },
+    {
+      "id": "call",
+      "name": "Call",
+      "file": "call.json"
     }
   ]
 }

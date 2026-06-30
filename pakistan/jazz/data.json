@@ -8,19 +8,6 @@
   },
   "packages": [
     {
-      "name": "Social Bundle",
-      "price": "99",
-      "code": "*123*5#",
-      "data": "1GB",
-      "validity": "3 Days",
-      "apps_only": true,
-      "apps": {
-        "whatsapp": "unlimited",
-        "facebook": "1GB",
-        "instagram": "500MB"
-      }
-    },
-    {
       "name": "Night Offer",
       "price": "25",
       "code": "*222#",

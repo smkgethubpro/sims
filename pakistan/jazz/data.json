@@ -8,22 +8,6 @@
   },
   "packages": [
     {
-      "name": "Jazz Weekly Super Max",
-      "price": "608",
-      "code": "*506#",
-      "data": "30GB",
-      "validity": "7 Days",
-      "is_featured": true
-    },
-    {
-      "name": "Jazz Monthly Mega",
-      "price": "300",
-      "code": "*117*31#",
-      "data": "4.2GB",
-      "validity": "30 Days",
-      "speed_limit": "4G"
-    },
-    {
       "name": "Jazz Monthly Browser",
       "price": "175",
       "code": "*117*77#",

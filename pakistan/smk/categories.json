@@ -1,0 +1,9 @@
+{
+  "categories": [
+    {
+      "id": "voice",
+      "name": "Voice Packages",
+      "file": "voice.json"
+    }
+  ]
+}

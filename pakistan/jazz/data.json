@@ -8,14 +8,6 @@
   },
   "packages": [
     {
-      "name": "Night Offer",
-      "price": "25",
-      "code": "*222#",
-      "data": "3GB",
-      "validity": "Night 12AM-6AM",
-      "time_based": true
-    },
-    {
       "name": "Unlimited Social Pack",
       "price": "499",
       "code": "*999#",

@@ -4,6 +4,11 @@
       "id": "special",
       "name": "Special",
       "file": "special.json"
+    },
+    {
+      "id": "data",
+      "name": "Data",
+      "file": "data.json"
     }
   ]
 }

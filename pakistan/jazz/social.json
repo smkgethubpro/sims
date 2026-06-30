@@ -1,12 +1,4 @@
 {
   "category": "social",
-  "packages": [
-    {
-      "name": "Social Plus",
-      "price": "100",
-      "code": "*114*2#",
-      "data": "5GB Social",
-      "validity": "7 Days"
-    }
-  ]
+  "packages": []
 }

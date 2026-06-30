@@ -15,7 +15,7 @@
 
 // SHA-256 hash of the access code. The plaintext is NOT present in this file.
 // (This is the hash of the agreed access code.)
-const CODE_HASH = 'b29efe9043c73d5154818339db134dcfe117dfc2da3c74184ec9731b9a61187b';
+const CODE_HASH = 'badccb2e3cb97dbbe12b1b2af0d57dad66b4f92976428fb758394e5584370889';
 
 const SESSION_KEY = 'sims_unlocked';
 

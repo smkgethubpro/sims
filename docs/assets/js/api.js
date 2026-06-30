@@ -19,8 +19,20 @@ const API_BASE = 'https://api.github.com/repos/smkgethubpro/sims/contents';
 
 const cache = new Map();
 
+// Cache-buster token. raw.githubusercontent.com is fronted by a CDN that can
+// serve stale content for several minutes even with `cache: 'no-cache'`. When
+// the user presses Refresh we bump this token so every request URL changes,
+// forcing the CDN to return the freshest content from the repo.
+let bust = '';
+
 function cacheKey(path) {
   return path;
+}
+
+/** Append the cache-buster query param (when set) to a raw URL. */
+function rawUrl(path) {
+  const url = `${RAW_BASE}/${path}`;
+  return bust ? `${url}?t=${bust}` : url;
 }
 
 /** Low-level JSON fetch with caching. Throws on non-OK. */
@@ -28,7 +40,7 @@ async function fetchJson(path) {
   const key = cacheKey(path);
   if (cache.has(key)) return cache.get(key);
 
-  const res = await fetch(`${RAW_BASE}/${path}`, { cache: 'no-cache' });
+  const res = await fetch(rawUrl(path), { cache: 'no-cache' });
   if (!res.ok) {
     const err = new Error(`Failed to load ${path} (HTTP ${res.status})`);
     err.status = res.status;
@@ -54,7 +66,7 @@ async function pathExists(path) {
   const key = `exists:${path}`;
   if (cache.has(key)) return cache.get(key);
   try {
-    const res = await fetch(`${RAW_BASE}/${path}`, { cache: 'no-cache' });
+    const res = await fetch(rawUrl(path), { cache: 'no-cache' });
     const ok = res.ok;
     cache.set(key, ok);
     return ok;
@@ -66,6 +78,16 @@ async function pathExists(path) {
 
 /** Clear cached entries (used after a refresh). */
 export function clearCache() {
+  cache.clear();
+}
+
+/**
+ * Force a hard refresh of repo data: clear the in-memory cache AND bump the
+ * cache-buster token so the CDN in front of raw.githubusercontent.com is
+ * bypassed and the very latest committed content is fetched.
+ */
+export function hardRefresh() {
+  bust = String(Date.now());
   cache.clear();
 }
 
@@ -91,7 +113,8 @@ export async function getRepoTopFolders() {
   const key = 'repo:topfolders';
   if (cache.has(key)) return cache.get(key);
   try {
-    const res = await fetch(API_BASE, { cache: 'no-cache' });
+    const apiUrl = bust ? `${API_BASE}?t=${bust}` : API_BASE;
+    const res = await fetch(apiUrl, { cache: 'no-cache' });
     if (!res.ok) { cache.set(key, null); return null; }
     const items = await res.json();
     const folders = new Set(

@@ -8,20 +8,6 @@
   },
   "packages": [
     {
-      "name": "Monthly Supreme",
-      "price": "1738",
-      "cost": 1738,
-      "code": "*117*30#",
-      "ussd": "*117*30#",
-      "data": "25GB",
-      "data_amount": 25,
-      "unit": "GB",
-      "validity": "30 Days",
-      "duration_days": 30,
-      "network": "Jazz",
-      "active": true
-    },
-    {
       "title": "Weekly Mega",
       "price": "350",
       "amount": 350,
@@ -68,7 +54,11 @@
       "code": "*117*77#",
       "data": "2.5GB",
       "validity": "30 Days",
-      "only_apps": ["Facebook", "WhatsApp", "YouTube"]
+      "only_apps": [
+        "Facebook",
+        "WhatsApp",
+        "YouTube"
+      ]
     },
     {
       "name": "Daily Light Pack",

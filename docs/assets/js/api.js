@@ -3,92 +3,171 @@
  * -----------------------------------------------------------------------------
  * All network / data access lives here. Nothing else fetches.
  *
- * Reads from the raw GitHub content of the repository so the dashboard works
- * unchanged on GitHub Pages (static, no backend).
+ * REAL-TIME ONLY — never stale:
+ *   The dashboard must always reflect the very latest committed content. To
+ *   guarantee that, this layer:
+ *     1. Fetches through the GitHub **Contents API** with the
+ *        `Accept: application/vnd.github.raw` header. The Contents API returns
+ *        the live file straight from Git, so it is NOT subject to the multi-
+ *        minute CDN caching that affects raw.githubusercontent.com.
+ *     2. Falls back to `raw.githubusercontent.com` (with a unique cache-buster
+ *        and no-store) only if the Contents API is unavailable.
+ *     3. Sends `cache: 'no-store'` and a unique `?t=<timestamp>` on EVERY
+ *        request so neither the browser nor any CDN can serve old data.
+ *     4. Keeps NO persistent success cache. (A tiny in-flight de-dupe map only
+ *        coalesces identical concurrent requests within the same render pass;
+ *        it is cleared as soon as each request settles.)
+ *   If the network is down or the latest data cannot be retrieved, the fetch
+ *   throws and callers render a loading/error state — never stale content.
  *
  * IMPORTANT repo-structure note:
  *   countries.json entries look like:
  *     { "id": "pk", "name": "Pakistan", "file": "pakistan/operators.json" }
- *   The country *id* ("pk") is NOT the folder name ("pakistan"). The previous
- *   app wrongly fetched `${id}/operators.json` which 404s. We derive the base
- *   path from the `file` field instead.
+ *   The country *id* ("pk") is NOT the folder name ("pakistan"). We derive the
+ *   base path from the `file` field instead.
  */
 
-const RAW_BASE = 'https://raw.githubusercontent.com/smkgethubpro/sims/main';
-const API_BASE = 'https://api.github.com/repos/smkgethubpro/sims/contents';
+import { getToken } from './github.js';
 
-const cache = new Map();
+const OWNER = 'smkgethubpro';
+const REPO = 'sims';
+const BRANCH = 'main';
 
-// Cache-buster token. raw.githubusercontent.com is fronted by a CDN that can
-// serve stale content for several minutes even with `cache: 'no-cache'`. When
-// the user presses Refresh we bump this token so every request URL changes,
-// forcing the CDN to return the freshest content from the repo.
-let bust = '';
+const RAW_BASE = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}`;
+const CONTENTS_API = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
 
-function cacheKey(path) {
-  return path;
+// In-flight de-dupe only. Maps path -> Promise while a request is pending so
+// that the same file requested twice concurrently (e.g. during one render)
+// shares a single network round-trip. Entries are deleted the moment the
+// request settles, so nothing is ever cached across user actions.
+const inFlight = new Map();
+
+/** A unique token per request to defeat browser/CDN caching. */
+function bustParam() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Append the cache-buster query param (when set) to a raw URL. */
-function rawUrl(path) {
-  const url = `${RAW_BASE}/${path}`;
-  return bust ? `${url}?t=${bust}` : url;
+/** Encode a repo path for a URL, preserving the slashes between segments. */
+function encodePath(path) {
+  return String(path)
+    .split('/')
+    .map((seg) => encodeURIComponent(seg))
+    .join('/');
 }
 
-/** Low-level JSON fetch with caching. Throws on non-OK. */
+function authHeaders(extra = {}) {
+  const headers = { ...extra };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+/** Fetch a file's text via the GitHub Contents API (live, never CDN-cached). */
+async function fetchViaApi(path) {
+  const url = `${CONTENTS_API}/${encodePath(path)}?ref=${encodeURIComponent(BRANCH)}&t=${bustParam()}`;
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: authHeaders({ Accept: 'application/vnd.github.raw' }),
+  });
+  if (res.ok) return { text: await res.text() };
+  const err = new Error(`Contents API ${res.status} for ${path}`);
+  err.status = res.status;
+  err.path = path;
+  throw err;
+}
+
+/** Fetch a file's text via the raw host with a unique cache-buster. */
+async function fetchViaRaw(path) {
+  const res = await fetch(`${RAW_BASE}/${encodePath(path)}?t=${bustParam()}`, { cache: 'no-store' });
+  if (res.ok) return { text: await res.text() };
+  const err = new Error(`Failed to load ${path} (HTTP ${res.status})`);
+  err.status = res.status;
+  err.path = path;
+  throw err;
+}
+
+/**
+ * Fetch raw file text for `path`, always real-time.
+ *
+ * Strategy:
+ *   - With a token (auto-save users): use the Contents API first — it returns
+ *     the live committed file (never CDN-stale) and has a 5000/hr rate limit.
+ *     Fall back to raw+cache-buster if the API hiccups.
+ *   - Without a token: use raw+cache-buster first (the unique ?t= defeats the
+ *     CDN cache and there's no 60/hr API limit to exhaust), and only fall back
+ *     to the unauthenticated Contents API if raw itself fails.
+ *
+ * A genuine 404 (missing file) is surfaced immediately and never masked.
+ * Returns { text } or throws an Error with `.status` set.
+ */
+async function fetchText(path) {
+  const primary = getToken() ? fetchViaApi : fetchViaRaw;
+  const secondary = getToken() ? fetchViaRaw : fetchViaApi;
+
+  try {
+    return await primary(path);
+  } catch (e1) {
+    if (e1.status === 404) throw e1;
+    try {
+      return await secondary(path);
+    } catch (e2) {
+      // Surface a definite 404 from the secondary; otherwise report the
+      // primary error so the caller can show a clear loading/error state.
+      if (e2.status === 404) throw e2;
+      throw e1;
+    }
+  }
+}
+
+/** Low-level JSON fetch — always real-time, never cached across actions. */
 async function fetchJson(path) {
-  const key = cacheKey(path);
-  if (cache.has(key)) return cache.get(key);
+  if (inFlight.has(path)) return inFlight.get(path);
 
-  const res = await fetch(rawUrl(path), { cache: 'no-cache' });
-  if (!res.ok) {
-    const err = new Error(`Failed to load ${path} (HTTP ${res.status})`);
-    err.status = res.status;
-    err.path = path;
-    throw err;
-  }
-  const text = await res.text();
-  let data;
+  const promise = (async () => {
+    const { text } = await fetchText(path);
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      const err = new Error(`Invalid JSON in ${path}: ${e.message}`);
+      err.path = path;
+      err.parseError = true;
+      throw err;
+    }
+  })();
+
+  inFlight.set(path, promise);
   try {
-    data = JSON.parse(text);
-  } catch (e) {
-    const err = new Error(`Invalid JSON in ${path}: ${e.message}`);
-    err.path = path;
-    err.parseError = true;
-    throw err;
+    return await promise;
+  } finally {
+    inFlight.delete(path);
   }
-  cache.set(key, data);
-  return data;
 }
 
-/** Returns true if a path exists (HEAD-ish GET, cached negative/positive). */
+/** Returns true if a path exists right now (real-time). */
 async function pathExists(path) {
-  const key = `exists:${path}`;
-  if (cache.has(key)) return cache.get(key);
   try {
-    const res = await fetch(rawUrl(path), { cache: 'no-cache' });
-    const ok = res.ok;
-    cache.set(key, ok);
-    return ok;
+    await fetchText(path);
+    return true;
   } catch {
-    cache.set(key, false);
     return false;
   }
 }
 
-/** Clear cached entries (used after a refresh). */
+/**
+ * No-op kept for backwards compatibility: there is no persistent cache to
+ * clear anymore (every read is already real-time).
+ */
 export function clearCache() {
-  cache.clear();
+  inFlight.clear();
 }
 
 /**
- * Force a hard refresh of repo data: clear the in-memory cache AND bump the
- * cache-buster token so the CDN in front of raw.githubusercontent.com is
- * bypassed and the very latest committed content is fetched.
+ * Kept for backwards compatibility with the Refresh button. Since reads are
+ * already real-time, this just drops any in-flight de-dupe entries so the next
+ * reads start fresh.
  */
 export function hardRefresh() {
-  bust = String(Date.now());
-  cache.clear();
+  inFlight.clear();
 }
 
 /**
@@ -107,25 +186,23 @@ export function countryBasePath(country) {
  * via the GitHub contents API). Used by statistics so we only scan countries
  * whose folder is really present — avoiding ~195 guaranteed 404s on load.
  * Returns a Set of folder names, or null if the API is unavailable (rate
- * limited / offline), letting callers fall back gracefully.
+ * limited / offline), letting callers fall back gracefully. Always real-time.
  */
 export async function getRepoTopFolders() {
-  const key = 'repo:topfolders';
-  if (cache.has(key)) return cache.get(key);
   try {
-    const apiUrl = bust ? `${API_BASE}?t=${bust}` : API_BASE;
-    const res = await fetch(apiUrl, { cache: 'no-cache' });
-    if (!res.ok) { cache.set(key, null); return null; }
+    const url = `${CONTENTS_API}?ref=${encodeURIComponent(BRANCH)}&t=${bustParam()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: authHeaders({ Accept: 'application/vnd.github+json' }),
+    });
+    if (!res.ok) return null;
     const items = await res.json();
-    const folders = new Set(
+    return new Set(
       (Array.isArray(items) ? items : [])
         .filter((i) => i.type === 'dir')
         .map((i) => i.name)
     );
-    cache.set(key, folders);
-    return folders;
   } catch {
-    cache.set(key, null);
     return null;
   }
 }

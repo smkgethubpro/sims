@@ -2,7 +2,7 @@
 
 A lightweight, **static** admin dashboard for managing SIM package data stored
 as JSON in this repository. It runs entirely in the browser and is served from
-**GitHub Pages** at https://smkgethubpro.github.io/sims/ — no backend required.
+**GitHub Pages** at https://smkgethubpro.github.io/sims/docs/index.html — no backend required.
 
 The dashboard is optimized for **editing and adding operators and packages**
 efficiently, not for marketing. It reads the repository's JSON over the GitHub

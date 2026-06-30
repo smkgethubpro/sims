@@ -1,4 +1,12 @@
 {
   "category": "data",
-  "packages": []
+  "packages": [
+    {
+      "name": "Super Ghanta Offer",
+      "price": 20,
+      "code": "*638#",
+      "data": "1 GB",
+      "validity": "1 Hour"
+    }
+  ]
 }

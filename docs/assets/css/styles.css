@@ -366,6 +366,40 @@ code, pre { font-family: var(--mono); }
 .toast--error { background: var(--danger); }
 .toast--info { background: var(--accent-strong); }
 
+/* ------------------------------ lock screen ------------------------------- */
+.lock {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #eaf1fe 0%, transparent 60%),
+    var(--bg);
+  animation: fade .2s ease;
+}
+.lock.lock--hide { opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.lock__card {
+  width: 100%; max-width: 360px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 32px 28px;
+}
+.lock__logo {
+  font-size: 40px; color: var(--accent); line-height: 1; margin-bottom: 10px;
+}
+.lock__title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.lock__sub { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
+.lock__form { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.lock__input { text-align: center; letter-spacing: .12em; }
+.lock__btn { width: 100%; }
+.lock__error { color: var(--danger); font-size: 13px; font-weight: 600; margin-top: 12px; min-height: 18px; }
+.lock--shake { animation: shake .4s ease; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 55% { transform: translateX(-9px); }
+  35%, 75% { transform: translateX(9px); }
+  90% { transform: translateX(-3px); }
+}
+
 /* ------------------------------ responsive -------------------------------- */
 @media (max-width: 1100px) {
   .dashboard {

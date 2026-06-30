@@ -14,6 +14,8 @@
 
 import { el, esc, openModal, closeModal, toast } from './ui.js';
 import { slugify, validateSlug } from './validation.js';
+import { hasToken, autoCommitFiles } from './github.js';
+import { clearCache } from './api.js';
 
 const GH_BASE = 'https://github.com/smkgethubpro/sims';
 
@@ -50,9 +52,10 @@ function fileBlock({ path, json, isNew = true }) {
 }
 
 /**
- * Show a "commit instructions" modal for one or more files.
+ * Render the copy-paste "commit instructions" modal for one or more files.
+ * This is the fallback used when no token is set or an auto-commit fails.
  */
-export function showSaveInstructions({ title, files, note }) {
+function showCopyPasteInstructions({ title, files, note }) {
   const body = el('div', {});
   if (note) body.appendChild(el('div', { class: 'banner banner--info', html: `<span class="banner__icon">ℹ️</span><div>${note}</div>` }));
   for (const f of files) body.appendChild(fileBlock(f));
@@ -60,6 +63,50 @@ export function showSaveInstructions({ title, files, note }) {
     el('button', { class: 'btn btn--primary', type: 'button', text: 'Done', onClick: closeModal }),
   ]);
   openModal({ title, body, footer: foot });
+}
+
+/**
+ * Persist one or more files.
+ *
+ * When a GitHub token is configured (⚙ Settings), this auto-commits every file
+ * directly to the repo via the Contents API and shows a success toast. If no
+ * token is set, or if any commit fails, it falls back to the original
+ * copy-paste instructions modal so the workflow always remains usable.
+ *
+ * Kept synchronous-looking for all existing callers (it returns a promise but
+ * callers may ignore it).
+ *
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {Array<{path:string, json:string, isNew?:boolean}>} opts.files
+ * @param {string} [opts.note]
+ */
+export async function showSaveInstructions({ title, files, note }) {
+  if (!hasToken()) {
+    showCopyPasteInstructions({ title, files, note });
+    return;
+  }
+
+  // Close any open editor/workflow modal and show a brief "saving" toast.
+  closeModal();
+  toast('Saving to GitHub…', 'info');
+
+  try {
+    await autoCommitFiles(files, title);
+    // Invalidate read cache so subsequent fetches see the new content.
+    clearCache();
+    toast('✅ Saved to GitHub', 'success');
+  } catch (e) {
+    toast(`GitHub save failed: ${e.message}`, 'error');
+    // Fall back to the manual copy-paste flow so nothing is lost.
+    showCopyPasteInstructions({
+      title,
+      files,
+      note: note
+        ? `${note}<br><br><strong>Auto-commit failed</strong> — you can commit manually below.`
+        : 'Auto-commit failed — you can commit these files manually below.',
+    });
+  }
 }
 
 /**

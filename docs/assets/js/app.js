@@ -15,7 +15,9 @@ import {
   openAddOperator, openAddCategory, showSaveInstructions,
   openEditCountry, openDeleteCountry, openEditOperator, openDeleteOperator,
 } from './workflows.js';
-import { confirmDialog } from './ui.js';
+import { confirmDialog, openModal, closeModal } from './ui.js';
+import { requireAccess } from './lock.js';
+import { getToken, setToken, hasToken } from './github.js';
 
 const state = {
   countries: [],
@@ -32,7 +34,11 @@ const state = {
 
 const dom = {};
 
-document.addEventListener('DOMContentLoaded', init);
+// Gate the whole app behind the access-code lock screen. The app only boots
+// after a correct code (or an already-unlocked session).
+document.addEventListener('DOMContentLoaded', () => {
+  requireAccess(init);
+});
 
 async function init() {
   cacheDom();
@@ -51,7 +57,7 @@ function cacheDom() {
   dom.statCountries = $('#statCountries');
   dom.statOperators = $('#statOperators');
   dom.statPackages = $('#statPackages');
-  dom.refreshBtn = $('#refreshBtn');
+  dom.settingsBtn = $('#settingsBtn');
 }
 
 function bindGlobalEvents() {
@@ -60,13 +66,77 @@ function bindGlobalEvents() {
     dom.countrySearch.value = dom.globalSearch.value;
     renderCountryList();
   });
-  dom.refreshBtn.addEventListener('click', async () => {
-    api.clearCache();
-    toast('Cache cleared — reloading', 'info');
-    await loadCountries();
-    if (state.selected.country) await selectCountry(state.selected.country, true);
-    loadStatistics();
+  if (dom.settingsBtn) dom.settingsBtn.addEventListener('click', openSettings);
+  refreshSettingsIndicator();
+}
+
+/* ------------------------------- settings --------------------------------- */
+
+/**
+ * Settings modal: paste / clear the GitHub Personal Access Token used for
+ * auto-committing changes. The token is stored in localStorage.
+ */
+function openSettings() {
+  const wrap = el('div', { class: 'pkg-form' });
+
+  wrap.appendChild(el('div', { class: 'banner banner--info', html:
+    `<span class="banner__icon">ℹ️</span><div>Paste a GitHub <strong>Personal Access Token</strong> with <code>repo</code> scope to auto-save changes directly to <code>smkgethubpro/sims</code>. Leave it empty to use the copy-paste flow. The token is stored only in this browser (localStorage).</div>` }));
+
+  const field = el('div', { class: 'field' });
+  field.appendChild(el('label', { class: 'field__label', for: 'ghToken', text: 'GitHub Personal Access Token' }));
+  const input = el('input', {
+    id: 'ghToken', class: 'input', type: 'password',
+    placeholder: 'ghp_… or github_pat_…', value: getToken(),
+    autocomplete: 'off', spellcheck: 'false',
   });
+  field.appendChild(input);
+  field.appendChild(el('p', { class: 'field__hint', html:
+    'Need one? <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Create a token</a> with <code>repo</code> scope.' }));
+  wrap.appendChild(field);
+
+  const showRow = el('label', { class: 'field field--inline' }, [
+    el('input', { class: 'checkbox', type: 'checkbox', id: 'ghShow',
+      onChange: (e) => { input.type = e.target.checked ? 'text' : 'password'; } }),
+    el('span', { class: 'field__label', text: 'Show token' }),
+  ]);
+  wrap.appendChild(showRow);
+
+  const saveBtn = el('button', { class: 'btn btn--primary', type: 'button', text: 'Save token' });
+  saveBtn.addEventListener('click', () => {
+    setToken(input.value);
+    refreshSettingsIndicator();
+    closeModal();
+    toast(hasToken() ? 'Token saved — changes will auto-save to GitHub' : 'Token cleared — using copy-paste mode', hasToken() ? 'success' : 'info');
+  });
+
+  const clearBtn = el('button', { class: 'btn btn--ghost', type: 'button', text: 'Clear token' });
+  clearBtn.addEventListener('click', () => {
+    setToken('');
+    input.value = '';
+    refreshSettingsIndicator();
+    closeModal();
+    toast('Token cleared — using copy-paste mode', 'info');
+  });
+
+  const foot = el('div', { class: 'btn-row btn-row--end' }, [
+    clearBtn,
+    el('button', { class: 'btn btn--ghost', type: 'button', text: 'Cancel', onClick: closeModal }),
+    saveBtn,
+  ]);
+
+  openModal({ title: 'GitHub auto-save settings', body: wrap, footer: foot });
+}
+
+/** Reflect token presence on the Settings button (subtle ✓ when connected). */
+function refreshSettingsIndicator() {
+  if (!dom.settingsBtn) return;
+  if (hasToken()) {
+    dom.settingsBtn.textContent = '⚙ Settings ✓';
+    dom.settingsBtn.title = 'GitHub auto-save is ON';
+  } else {
+    dom.settingsBtn.textContent = '⚙ Settings';
+    dom.settingsBtn.title = 'GitHub auto-save settings';
+  }
 }
 
 /* ------------------------------- countries -------------------------------- */

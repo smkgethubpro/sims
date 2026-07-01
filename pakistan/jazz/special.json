@@ -1,4 +1,17 @@
 {
   "category": "special",
-  "packages": []
+  "packages": [
+    {
+      "name": "Meme",
+      "price": "Nan",
+      "code": "Jaj",
+      "data": "Jsjs",
+      "validity": "Uwua",
+      "network": "Jazz",
+      "active": true,
+      "Ua": "Isi",
+      "Ausu": "Usi",
+      "Ausi": "Ususu"
+    }
+  ]
 }

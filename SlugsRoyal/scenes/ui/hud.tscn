@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://hud_scene"]
+
+[node name="HUD" type="CanvasLayer"]
+layer = 100
+script = ExtResource( 1 )
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+position = ( 20, 20 )
+size = ( 200, 30 )
+value = 100
+max_value = 100
+
+[node name="ArmorBar" type="ProgressBar" parent="."]
+position = ( 20, 60 )
+size = ( 200, 30 )
+value = 0
+max_value = 100
+
+[node name="AmmoLabel" type="Label" parent="."]
+position = ( 20, 100 )
+size = ( 100, 30 )
+text = "12/12"
+
+[node name="WeaponLabel" type="Label" parent="."]
+position = ( 20, 140 )
+size = ( 150, 30 )
+text = "Pistol"
+
+[node name="SlugLabel" type="Label" parent="."]
+position = ( 20, 180 )
+size = ( 150, 30 )
+text = "Inferno (5)"
+
+[node name="Minimap" type="Node2D" parent="."]
+position = ( 1600, 20 )
+size = ( 200, 200 )
+script = ExtResource( 2 )
+
+[node name="PlayerMarker" type="Sprite2D" parent="./Minimap"]
+position = ( 100, 100 )
+
+[node name="ZoneCircle" type="Sprite2D" parent="./Minimap"]
+
+[node name="DangerZoneCircle" type="Sprite2D" parent="./Minimap"]
+
+[node name="EnemyCountLabel" type="Label" parent="."]
+position = ( 1600, 240 )
+size = ( 150, 30 )
+text = "Enemies: 50"
+
+[node name="InteractionPrompt" type="Label" parent="."]
+position = ( 800, 500 )
+size = ( 200, 30 )
+visible = false
+text = "Press E to interact"
+
+[resource type="Script" id=1 path="res://scripts/ui/hud.gd"]
+
+[resource type="Script" id=2 path="res://scripts/ui/minimap.gd"]

@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://player_scene"]
+
+[node name="Player" type="CharacterBody3D"]
+group = ["players"]
+script = ExtResource( 1 )
+
+[node name="CameraArm" type="Node3D" parent="."]
+position = ( 0, 1.5, 3 )
+
+[node name="CameraPivot" type="Node3D" parent="./CameraArm"]
+
+[node name="Camera3D" type="Camera3D" parent="./CameraArm/CameraPivot"]
+position = ( 0, 0, 3 )
+current = true
+
+[node name="Hitbox" type="Area3D" parent="."]
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="./Hitbox"]
+shape = ExtResource( 2 )
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = ExtResource( 3 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = ExtResource( 4 )
+
+[connection signal="body_entered" from="Hitbox" to="." method="_on_hitbox_body_entered"]
+
+[resource type="Script" id=1 path="res://scripts/player/player_controller.gd"]
+
+[resource type="CapsuleShape3D" id=2 path=""]
+height = 1.8
+radius = 0.5
+
+[resource type="BoxShape3D" id=3 path=""]
+half_extents = ( 0.5, 1, 0.5 )
+
+[resource type="CapsuleMesh" id=4 path=""]
+height = 1.8
+radius = 0.5
+radial_segments = 16
+rings = 8

@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3 uid="uid://inventory_ui_scene"]
+
+[node name="InventoryUI" type="Control"]
+visible = false
+anchor_right = 1
+anchor_bottom = 1
+script = ExtResource( 1 )
+
+[node name="Panel" type="Panel" parent="."]
+anchor_right = 1
+anchor_bottom = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TabContainer" type="TabContainer" parent="./Panel"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="WeaponsTab" type="Control" parent="./Panel/TabContainer"]
+
+[node name="Label" type="Label" parent="./Panel/TabContainer/WeaponsTab"]
+text = "Weapons"
+
+[node name="WeaponGrid" type="GridContainer" parent="./Panel/TabContainer/WeaponsTab"]
+columns = 4
+size_flags_horizontal = 3
+
+[node name="SlugsTab" type="Control" parent="./Panel/TabContainer"]
+
+[node name="Label" type="Label" parent="./Panel/TabContainer/SlugsTab"]
+text = "Slugs"
+
+[node name="SlugGrid" type="GridContainer" parent="./Panel/TabContainer/SlugsTab"]
+columns = 3
+size_flags_horizontal = 3
+
+[node name="AmmoTab" type="Control" parent="./Panel/TabContainer"]
+
+[node name="Label" type="Label" parent="./Panel/TabContainer/AmmoTab"]
+text = "Ammo"
+
+[node name="AmmoGrid" type="GridContainer" parent="./Panel/TabContainer/AmmoTab"]
+columns = 2
+size_flags_horizontal = 3
+
+[node name="ItemInfoLabel" type="Label" parent="./Panel"]
+position = ( 20, 400 )
+size = ( 300, 50 )
+text = "Select an item for details"
+
+[node name="CloseButton" type="Button" parent="./Panel"]
+position = ( 1700, 20 )
+size = ( 100, 40 )
+text = "Close"
+
+[resource type="Script" id=1 path="res://scripts/ui/inventory_ui.gd"]

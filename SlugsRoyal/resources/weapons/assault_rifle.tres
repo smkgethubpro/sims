@@ -1,0 +1,5 @@
+[resource]
+resource_name = ""
+script = ExtResource( 1 )
+
+[ext_resource type="Script" id=1 path="res://scripts/weapons/assault_rifle.gd"]

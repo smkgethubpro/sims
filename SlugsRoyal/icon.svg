@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" fill="#2d3436"/>
+<circle cx="256" cy="256" r="180" fill="#e74c3c"/>
+<circle cx="256" cy="256" r="140" fill="#c0392b"/>
+<circle cx="256" cy="256" r="100" fill="#2c3e50"/>
+<text x="256" y="280" font-family="Arial, sans-serif" font-size="48" fill="#ecf0f1" text-anchor="middle" font-weight="bold">SLUGS</text>
+<text x="256" y="340" font-family="Arial, sans-serif" font-size="36" fill="#ecf0f1" text-anchor="middle">ROYAL</text>
+<circle cx="180" cy="180" r="30" fill="#f1c40f"/>
+<circle cx="332" cy="180" r="30" fill="#3498db"/>
+<circle cx="256" cy="332" r="30" fill="#2ecc71"/>
+</svg>

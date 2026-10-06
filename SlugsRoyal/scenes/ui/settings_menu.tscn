@@ -1,0 +1,79 @@
+[gd_scene load_steps=2 format=3 uid="uid://settings_menu_scene"]
+
+[node name="SettingsMenu" type="Control"]
+visible = false
+anchor_right = 1
+anchor_bottom = 1
+script = ExtResource( 1 )
+
+[node name="Panel" type="Panel" parent="."]
+anchor_right = 1
+anchor_bottom = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="./Panel"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TitleLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="GraphicsLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "Graphics Quality:"
+
+[node name="GraphicsSlider" type="HSlider" parent="./Panel/VBoxContainer"]
+min_value = 0
+max_value = 3
+value = 1
+step = 1
+size_flags_horizontal = 3
+
+[node name="SoundLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "Sound Volume:"
+
+[node name="SoundSlider" type="HSlider" parent="./Panel/VBoxContainer"]
+min_value = 0
+max_value = 100
+value = 100
+step = 1
+size_flags_horizontal = 3
+
+[node name="MusicLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "Music Volume:"
+
+[node name="MusicSlider" type="HSlider" parent="./Panel/VBoxContainer"]
+min_value = 0
+max_value = 100
+value = 80
+step = 1
+size_flags_horizontal = 3
+
+[node name="SensitivityLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "Mouse Sensitivity:"
+
+[node name="SensitivitySlider" type="HSlider" parent="./Panel/VBoxContainer"]
+min_value = 0
+max_value = 200
+value = 100
+step = 1
+size_flags_horizontal = 3
+
+[node name="InvertYCheck" type="CheckButton" parent="./Panel/VBoxContainer"]
+text = "Invert Y Axis"
+
+[node name="FPSLimitLabel" type="Label" parent="./Panel/VBoxContainer"]
+text = "FPS Limit:"
+
+[node name="FPSLimitInput" type="SpinBox" parent="./Panel/VBoxContainer"]
+min_value = 30
+max_value = 144
+value = 60
+step = 1
+
+[node name="CloseButton" type="Button" parent="./Panel/VBoxContainer"]
+text = "Close"
+size_flags_horizontal = 3
+
+[resource type="Script" id=1 path="res://scripts/ui/settings_menu.gd"]

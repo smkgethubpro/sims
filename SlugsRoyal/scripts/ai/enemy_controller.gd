@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name EnemyController
+
 ## EnemyController - AI enemy controller for Slugs Royal
 
 # Signals

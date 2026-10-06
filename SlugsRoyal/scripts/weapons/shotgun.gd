@@ -1,5 +1,6 @@
 extends Weapon
 class_name Shotgun
+
 ## Shotgun - Spread weapon with multiple pellets
 
 # Shotgun-specific properties

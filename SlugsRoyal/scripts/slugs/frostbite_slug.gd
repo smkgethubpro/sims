@@ -1,5 +1,6 @@
 extends SlugResource
 class_name FrostbiteSlug
+
 ## FrostbiteSlug - Ice-based slug with slowing and freezing effects
 
 func _init():

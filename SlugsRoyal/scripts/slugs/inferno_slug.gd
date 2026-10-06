@@ -1,5 +1,6 @@
 extends SlugResource
 class_name InfernoSlug
+
 ## InfernoSlug - Fire-based slug with burning effects
 
 func _init():

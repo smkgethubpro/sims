@@ -1,5 +1,6 @@
 extends LootItem
 class_name HealthLoot
+
 ## HealthLoot - Loot item that restores health
 
 # Export variables

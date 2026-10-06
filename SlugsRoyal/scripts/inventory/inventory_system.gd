@@ -1,5 +1,6 @@
 extends Node
 class_name InventorySystem
+
 ## InventorySystem - Player inventory management for Slugs Royal
 
 # Signals

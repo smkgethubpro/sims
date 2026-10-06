@@ -1,5 +1,6 @@
 extends Node3D
 class_name BattleRoyaleZone
+
 ## BattleRoyaleZone - Shrinking safe zone for battle royale gameplay
 
 # Signals

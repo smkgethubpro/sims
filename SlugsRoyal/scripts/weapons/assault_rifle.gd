@@ -1,5 +1,6 @@
 extends Weapon
 class_name AssaultRifle
+
 ## AssaultRifle - Automatic assault rifle
 
 func _init():

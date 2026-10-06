@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name PlayerController
+
 ## PlayerController - Third-person player controller for Slugs Royal
 
 # Signals

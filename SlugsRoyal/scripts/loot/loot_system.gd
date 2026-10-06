@@ -1,5 +1,6 @@
 extends Node
 class_name LootSystem
+
 ## LootSystem - Central loot management system for Slugs Royal
 
 # Export variables

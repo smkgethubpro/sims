@@ -1,5 +1,6 @@
 extends SlugResource
 class_name TerrabeastSlug
+
 ## TerrabeastSlug - Earth-based slug with ground shockwave
 
 func _init():

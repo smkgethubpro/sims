@@ -1,5 +1,6 @@
 extends Control
 class_name InventoryUI
+
 ## InventoryUI - Inventory user interface for Slugs Royal
 
 # Signals

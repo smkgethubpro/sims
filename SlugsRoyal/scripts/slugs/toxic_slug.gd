@@ -1,5 +1,6 @@
 extends SlugResource
 class_name ToxicSlug
+
 ## ToxicSlug - Poison-based slug with damage over time
 
 func _init():

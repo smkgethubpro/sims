@@ -1,5 +1,6 @@
 extends LootItem
 class_name ArmorLoot
+
 ## ArmorLoot - Loot item that provides armor
 
 # Export variables

@@ -1,5 +1,6 @@
 extends Control
 class_name SettingsMenu
+
 ## SettingsMenu - Settings menu for Slugs Royal
 
 # Export variables

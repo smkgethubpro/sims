@@ -1,5 +1,6 @@
 extends Control
 class_name AssetSystemUI
+
 ## AssetSystemUI - Asset management system UI for Slugs Royal
 
 # Signals

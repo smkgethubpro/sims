@@ -1,5 +1,6 @@
 extends LootItem
 class_name WeaponLoot
+
 ## WeaponLoot - Loot item that contains a weapon
 
 # Export variables

@@ -1,5 +1,6 @@
 extends Node3D
 class_name Weapon
+
 ## Weapon - Base weapon class for Slugs Royal
 
 # Signals

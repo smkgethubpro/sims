@@ -7,7 +7,8 @@
 
 config/name="Slugs Royal"
 run/main_scene="res://scenes/game.tscn"
-config/features=PackedStringArray("4.2", "Forward Plus")
+config/features=PackedStringArray("4.7.2", "Forward Plus")
+config/version="4.7.2.stable"
 config/icon="res://icon.svg"
 
 [autoload]

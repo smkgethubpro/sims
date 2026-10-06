@@ -1,5 +1,6 @@
 extends LootItem
 class_name AmmoLoot
+
 ## AmmoLoot - Loot item that provides ammunition
 
 # Export variables

@@ -1,5 +1,6 @@
 extends Weapon
 class_name SniperRifle
+
 ## SniperRifle - Long-range high-damage weapon
 
 func _init():

@@ -1,5 +1,6 @@
 extends Resource
 class_name SlugResource
+
 ## SlugResource - Base resource class for all slug types in Slugs Royal
 
 # Slug properties

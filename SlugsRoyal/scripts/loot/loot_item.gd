@@ -1,5 +1,6 @@
 extends Node3D
 class_name LootItem
+
 ## LootItem - Base class for all loot items in Slugs Royal
 
 # Signals

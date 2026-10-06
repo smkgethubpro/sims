@@ -1,5 +1,6 @@
 extends Node2D
 class_name Minimap
+
 ## Minimap - Minimap display for Slugs Royal
 
 # Export variables

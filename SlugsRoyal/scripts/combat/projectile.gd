@@ -1,5 +1,6 @@
 extends RigidBody3D
 class_name Projectile
+
 ## Projectile - Base projectile class for weapons and slugs
 
 # Signals

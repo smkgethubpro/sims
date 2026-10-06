@@ -1,5 +1,6 @@
 extends Weapon
 class_name Pistol
+
 ## Pistol - Standard pistol weapon
 
 func _init():

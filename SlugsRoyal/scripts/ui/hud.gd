@@ -1,5 +1,6 @@
 extends CanvasLayer
 class_name HUD
+
 ## HUD - Heads-up display for Slugs Royal
 
 # Export variables

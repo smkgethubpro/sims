@@ -1,5 +1,6 @@
 extends Node3D
 class_name PlayerCamera
+
 ## PlayerCamera - Third-person camera controller for Slugs Royal
 
 # Export variables

@@ -1,5 +1,6 @@
 extends SlugResource
 class_name ThunderSlug
+
 ## ThunderSlug - Electric slug with chain damage
 
 func _init():

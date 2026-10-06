@@ -1,5 +1,6 @@
 extends Control
 class_name MainMenu
+
 ## MainMenu - Main menu for Slugs Royal
 
 # Signals

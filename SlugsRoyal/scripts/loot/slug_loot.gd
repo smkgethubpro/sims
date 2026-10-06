@@ -1,5 +1,6 @@
 extends LootItem
 class_name SlugLoot
+
 ## SlugLoot - Loot item that contains a slug
 
 # Export variables

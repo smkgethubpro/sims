@@ -1,5 +1,6 @@
 extends Projectile
 class_name SlugProjectile
+
 ## SlugProjectile - Projectile with slug-specific effects
 
 # Slug type reference
